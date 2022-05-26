@@ -1,0 +1,8 @@
+*.o
+*.obj
+*~
+*.err
+*.map
+*.bin
+*.com
+*.img

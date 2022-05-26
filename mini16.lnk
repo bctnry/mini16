@@ -1,0 +1,17 @@
+format dos com
+option map
+name main.bin
+
+file init.o
+
+file string.o
+
+file cursor_int10.o, term_int10.o, vga.o, term.o
+
+file kb_int16.o, kb.o
+
+file disk_int13.o
+
+file parse.o, shell.o
+
+file main.o

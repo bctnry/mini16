@@ -1,0 +1,6 @@
+format raw bin
+option map
+option offset=0x7c00
+name main_boot.bin
+
+file boot.o
