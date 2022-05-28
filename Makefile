@@ -16,6 +16,7 @@ kernel:
 	wasm -0 src/term/cursor_int10.asm
 	wasm -0 src/term/term_int10.asm
 	wasm -0 src/task/int8.asm
+	wasm -0 src/util/power.asm
 	wcc -0 -ms src/term/vga.c
 	wcc -0 -ms src/term/term.c
 	wcc -0 -ms src/shell/shell.c

@@ -35,6 +35,7 @@ wasm -0 .\src\disk\disk_int13.asm -fo=disk_int13.o
 wasm -0 .\src\term\cursor_int10.asm -fo=cursor_int10.o
 wasm -0 .\src\term\term_int10.asm -fo=term_int10.o
 wasm -0 .\src\task\int8.asm -fo=int8.o
+wasm -0 .\src\util\power.asm -fo=power.o
 wcc -0 -ms .\src\term\vga.c -fo=vga.o
 wcc -0 -ms .\src\term\term.c -fo=term.o
 wcc -0 -ms .\src\task\scheduler.c -fo=scheduler.o

@@ -4,6 +4,7 @@
 #include "../kb/kb.h"
 #include "../cstdlib/string.h"
 #include "../util/debug.h"
+#include "../util/power.h"
 #include "../disk/disk.h"
 #include "parse.h"
 
@@ -234,6 +235,61 @@ void at_write_disk(char* x) {
     }
 }
 
+// NOTE: a few issues about APM here:
+// according to this source:
+//     https://wiki.osdev.org/Shutdown
+// turn off all devices with BX=01h is only supported with APM 1.1+
+// so it cannot support devices with only APM 1.0, which I have zero
+// idea what kind of legacy devices that will be.
+// qemu shuts down even when at_apm_load is not called beforehand,
+// so maybe I did something wrong in the APM driver or that's just
+// the way qemu is.
+// it was also said that "many new machines does not support APM
+// any more". while I'm not anticipating any one will run this on
+// actual hardware, I should switch to ACPI shutdown in the future.
+
+void at_apm_load() {
+    unsigned short res = power_apm_chk();
+    char res2;
+    if (!res) {
+        term_echo_str("No APM support.\r\n");
+        return;
+    }
+    term_echo_str("APM installed ");
+    disp_word(res);
+    term_echo_newline();
+    res2 = power_apm_connect();
+    if (!res2) {
+        term_echo_str("Cannot connect to APM interface.\r\n");
+        return;
+    }
+    res2 = power_apm_setver(res);
+    if (res2) {
+        term_echo_str("Failed to set ver: ");
+        disp_byte(res2);
+        term_echo_newline();
+        power_apm_disconnect();
+        return;
+    }
+    res2 = power_apm_enable_all();
+    if (res2) {
+        term_echo_str("Failed to enable power management: ");
+        disp_byte(res2);
+        term_echo_newline();
+        power_apm_disconnect();
+    }
+    term_echo_str("APM interface connected & enabled.\r\n");
+}
+
+void at_apm_shutdown() {
+    char res = power_apm_set_state(3);
+    if (res) {
+        term_echo_str("Failed to shutdown: ");
+        disp_byte(res);
+        term_echo_newline();
+    }
+}
+
 // `x` already trimmed left.
 void at_shell(char* x) {
     char* subj = get_token(x, tokenbuf);
@@ -249,6 +305,10 @@ void at_shell(char* x) {
         at_write_disk(x);
     } else if (strcmp(tokenbuf, "@list_disk") == 0) {
         at_list_disk();
+    } else if (strcmp(tokenbuf, "@apm_load") == 0) {
+        at_apm_load();
+    } else if (strcmp(tokenbuf, "@apm_shutdown") == 0) {
+        at_apm_shutdown();
     } else {
         vga_write_str(UNKNOWN_COMMAND, 0, 24);
         vga_write_str(x, strlen(UNKNOWN_COMMAND), 24);
@@ -272,6 +332,7 @@ void shell(void) {
         if (x[0] == '@') {
             at_shell(x);
         } else if (strcmp(x, "exit") == 0) {
+            at_apm_shutdown();
             break;
         } else if (strcmp(x, "clear") == 0) {
             vga_flush_up(0, 25, 0, 1);
