@@ -12,6 +12,8 @@ file kb_int16.o, kb.o
 
 file disk_int13.o
 
+file int8.o, scheduler.o
+
 file parse.o, shell.o
 
 file main.o

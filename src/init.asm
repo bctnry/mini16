@@ -4,7 +4,7 @@
         .code
         ;; this ORG line is necessary for .COM files so that the data
         ;; section will not be referred by wrong locations.
-        ORG 1400h
+        ORG 2000h
 
         ;; reference to the `main` function in C.
         extern main_: near ptr
@@ -24,6 +24,8 @@ _cstart_:
         ;; because we're using the tiny model so we don't need
         ;; to setup SS.
         JMP _cmain
+        NOP
+        db 'SRH'
 _cmain:
         STI
         MOV SP, 0FFFEh

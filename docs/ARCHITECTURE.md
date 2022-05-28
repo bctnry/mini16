@@ -6,9 +6,10 @@
 
 According to some online sources the two bit of usable consecutive memory under real mode is:
 
-+ `0000:0500` ~ `0000:7bff`; we will call this part Part A
-+ `0000:7e00` ~ `7000:ffff`; we will call this part Part B
++ `0000:0500` ~ `0000:7bff`;
++ `0000:7e00` ~ `7000:ffff`;
 
+`0000:7c00`~`0000:7e00` is the boot sector part, which can be reused later.
 
 ```
 0000:0500  |----------|
@@ -44,7 +45,9 @@ The bootloader will reside in `0000:7c00`~`0000:7dff` but in Mini16 this piece o
 0000:0600  |----------|
 0000:13ff  |    ENV   |  (3.5KB)
 0000:1400  |----------|
-0000:6fff  |  KERNEL  |  (26KB)
+           |          |  (3KB)
+0000:2000  |----------|
+0000:6fff  |  KERNEL  |  (23KB)
 0000:7000  |----------|
            |          |  (32KB)
 0000:f000  |----------|  (3KB)

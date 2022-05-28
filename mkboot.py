@@ -1,5 +1,5 @@
 with open('main_boot.bin', 'rb') as f:
-    boot_data = f.read()
+    boot_data = f.read()[:512]
 
 with open('main.bin', 'rb') as f:
     main_data = f.read()

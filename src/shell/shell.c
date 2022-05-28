@@ -261,7 +261,7 @@ void at_shell(char* x) {
 void shell(void) {
     size_t i = 0;
     char* x = cmdbuf;
-    vga_write_str_c("Mini16 mk.0 2022.5.27", COLOR_BG_BLACK|COLOR_FG_WHITE|COLOR_FG_BRIGHT, 0, 23);
+    vga_write_str_c("Mini16 2022.5.27", COLOR_BG_BLACK|COLOR_FG_WHITE|COLOR_FG_BRIGHT, 0, 23);
     for (;;) {
         vga_set_color(COLOR_BG_BLACK|COLOR_FG_WHITE|COLOR_FG_BRIGHT, 0, 24, 2, 25);
         vga_write_str(PROMPT, 0, 24);

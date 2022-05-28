@@ -4,7 +4,7 @@
         .model tiny
 
         .code                    
-                                  
+          
 _init:
         ;; FAT12 requires these fields to be this way.
         JMP boot
@@ -35,7 +35,8 @@ _init:
         
 
 bios_reset dd 0ffff0000h
-kernel dd 00001400h
+KERNEL_START_ADDR_NEAR EQU 2000h
+KERNEL_START_ADDR_FAR dd 00002000h
 boot:
         XOR AX, AX
         MOV SS, AX
@@ -44,22 +45,49 @@ boot:
         MOV AX, 3
         INT 10H
 
+        ;; detect low memory.
+        CLC
+        INT 12H
+        JC mem_detect_error
+
+        CMP AX, 64
+        JNB load_kernel
+        LEA SI, msg_low_mem
+        CALL print_string
+        HLT
+        
+mem_detect_error:
+        LEA SI, msg_detect_mem_fail
+        CALL print_string
+
+
+load_kernel:
         ;; load kernel.
         MOV AH, 2
         MOV AL, 16              ; 16 sector 8KB
         MOV CH, 0
         MOV CL, 2
         MOV DH, 0
-        
         MOV BX, 0
         MOV ES, BX
-        MOV BX, 1400h
-
+        MOV BX, KERNEL_START_ADDR_NEAR
+        MOV DL, 0   ;; from floppy disk.
         INT 13h
 
-        CMP BYTE PTR ES:[1400h], 0ebh
-        JE chk_ok
+check:
+        CMP BYTE PTR ES:[KERNEL_START_ADDR_NEAR], 0ebh
+        JNE chk_fail
+        CMP BYTE PTR ES:[KERNEL_START_ADDR_NEAR+3], 'S'
+        JNE chk_fail
+        CMP BYTE PTR ES:[KERNEL_START_ADDR_NEAR+4], 'R'
+        JNE chk_fail
+        CMP BYTE PTR ES:[KERNEL_START_ADDR_NEAR+5], 'H'
+        JNE chk_fail
 
+        JMP chk_ok
+chk_fail:
+
+chk_really_failed:
         LEA SI, msg_fail
         CALL print_string
 
@@ -72,9 +100,8 @@ reboot:
         MOV WORD PTR DS:[72h], 0
         JMP bios_reset
 
-
 chk_ok:
-        JMP kernel
+        JMP KERNEL_START_ADDR_FAR
 
 ;;; print string using AH=0eh,INT10.
 ;;; input: DS:[SI] - data
@@ -94,11 +121,22 @@ printed:
         POP AX
         RET
 
+__STK:
+        RET
+
 msg_fail:
-        DB 'Integrity check failed. Press any key to reboot.', 0
+        DB 'Kernel load failed. Press any key to reboot.', 0
+
+msg_detect_mem_fail:
+        DB 'Memory detect failed.', 0        
+
+msg_low_mem:
+        db 'Memory lower than 64KBytes. Mini16 will not boot.', 0
 
         db 510-($-_init) dup (0)
 
         dw 0aa55h
 
         end
+
+

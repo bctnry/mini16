@@ -15,16 +15,18 @@ kernel:
 	wasm -0 src/disk/disk_int13.asm
 	wasm -0 src/term/cursor_int10.asm
 	wasm -0 src/term/term_int10.asm
+	wasm -0 src/task/int8.asm
 	wcc -0 -ms src/term/vga.c
 	wcc -0 -ms src/term/term.c
 	wcc -0 -ms src/shell/shell.c
+	wcc -0 -ms src/task/scheduler.c
 	wcc -0 -ms src/shell/parse.c
 	wcc -0 -ms src/main.c
 	wlink @mini16.lnk
 	make clean_obj
 
 bootloader:
-	wasm -0 src/boot.asm
+	wasm -0 src/boot/boot.asm
 	wlink @mini16_boot.lnk
 	make clean_obj
 

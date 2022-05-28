@@ -34,8 +34,10 @@ wcc -0 -ms .\src\kb\kb.c -fo=kb.o
 wasm -0 .\src\disk\disk_int13.asm -fo=disk_int13.o
 wasm -0 .\src\term\cursor_int10.asm -fo=cursor_int10.o
 wasm -0 .\src\term\term_int10.asm -fo=term_int10.o
+wasm -0 .\src\task\int8.asm -fo=int8.o
 wcc -0 -ms .\src\term\vga.c -fo=vga.o
 wcc -0 -ms .\src\term\term.c -fo=term.o
+wcc -0 -ms .\src\task\scheduler.c -fo=scheduler.o
 wcc -0 -ms .\src\shell\shell.c -fo=shell.o
 wcc -0 -ms .\src\shell\parse.c -fo=parse.o
 wcc -0 -ms .\src\main.c -fo=main.o
@@ -45,7 +47,7 @@ EXIT /B
 
 :BOOTLOADER
 ECHO "Building bootloader"
-wasm -0 .\src\boot.asm -fo=boot.o
+wasm -0 .\src\boot\boot.asm -fo=boot.o
 wlink @mini16_boot.lnk
 EXIT /B
 
