@@ -43,15 +43,17 @@ The bootloader will reside in `0000:7c00`~`0000:7dff` but in Mini16 this piece o
 0000:0500  |----------|
 0000:05ff  |    CWD   |  (256B)
 0000:0600  |----------|
-0000:13ff  |    ENV   |  (3.5KB)
-0000:1400  |----------|
-           |          |  (3KB)
+           |    ENV   |  (4KB)
+0000:1600  |----------|
+0000:16ff  |   DMRT   |  (256B)
+0000:1700  |----------|
+           |          |  (2KB)
 0000:2000  |----------|
-0000:6fff  |  KERNEL  |  (23KB)
-0000:7000  |----------|
-           |          |  (32KB)
-0000:f000  |----------|  (3KB)
-0000:fc00  |----------|  (512B)
+0000:cfff  |  KERNEL  |  (44KB)
+0000:d000  |----------|
+           | DISKBUFF |  (8KB)
+0000:f000  |----------|
+0000:fdff  | RESERVED |  (3.5KB)
 0000:fe00  |----------|
 0000:ffff  | KRNL STK |  (512B)
 1000:0000  |----------|
@@ -63,7 +65,29 @@ Because we'll only be using FAT12/16 every file will have a maximum name length 
 
 #### Environment variables
 
-Starting from `0000:0600` to `0000:13ff` is reserved for environment variables in the format of `VAR_NAME=var_value` or `VAR_NAME=var_value1;var_value2;...;var_value_n` if `VAR_NAME` should contain several items (e.g. `PATH`), separated by `\n` (`0xa`).
+Starting from `0000:0600` to `0000:15ff` is reserved for environment variables in the format of `VAR_NAME=var_value` or `VAR_NAME=var_value1;var_value2;...;var_value_n` if `VAR_NAME` should contain several items (e.g. `PATH`), separated by `\n` (`0xa`).
+
+#### DMRT: Drive Mounting Record Table
+
+DMRT contains 256 record slots, each record contains a single one-byte "file system id".
+
+File system id table:
+
++ 0x00 - Unspecified
++ 0x01 - FAT12
++ 0x02 - FAT16
+
+#### Disk buffer
+
+```
+0000:d000 |------------|
+0000:d1ff |  1ST SEC.  |
+0000:d200 |------------| 
+0000:d3ff |  DIR SEC.  |
+0000:d400 |------------|
+0000:d5ff | CLUS. SEC. |
+0000:d600 |------------|
+```
 
 ## Memory map of the kernel section
 

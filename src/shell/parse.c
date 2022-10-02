@@ -18,14 +18,14 @@ char read_nibble_ch(char x) {
     return res;
 }
 
-unsigned short read_word(const char* str) {
-    unsigned short res = 0;
+unsigned short int read_word(const char* str) {
+    unsigned short int res = 0;
     size_t i = 0;
     if (strncmp(str, "0x", 2) == 0) {
         // hex.
         i = 2; while (str[i]) {
             res <<= 4;
-            res += (char)read_nibble_ch(str[i]);
+            res += (unsigned short int)read_nibble_ch(str[i]);
             i++;
         }
     } else {

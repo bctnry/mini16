@@ -1,6 +1,7 @@
 #include "kb.h"
 #include "../term/vga.h"
 #include "../term/cursor.h"
+#include "../term/term.h"
 
 /* Ctrl+Enter inputs linefeed; so this is also used to handle "pseudo-multi-line" input in Mini16. */
 signed char kb_readline(char* buffer, unsigned short bufsize, char no_echo, char no_newline) {

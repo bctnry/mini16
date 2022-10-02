@@ -20,9 +20,13 @@ void disp_dword(unsigned long x) {
 }
 
 void disp_addr(void far* x) {
-    disp_word((unsigned short)((unsigned long)x>>16));
+    disp_word((unsigned short)(((unsigned long)x)>>16));
     term_echo(':');
     disp_word((unsigned short)(((unsigned long)x)&0xffff));
+}
+
+void disp_nstr(size_t n, char* x) {
+    size_t i = 0; while (x[i]) { term_echo(x[i]); i++; }
 }
 
 

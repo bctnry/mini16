@@ -12,6 +12,64 @@
 	extern term_echo_: near ptr
 
 
+	;; char check_lba_support(
+	;; )
+	;; INT 13h AH=41h
+	;;  BX = 55aah
+	;;  DL = 80h
+	public check_lba_support_
+check_lba_support_:
+	PUSH BX
+	PUSH DX
+	MOV AH, 41h
+	MOV BX, 55aah
+	MOV DL, 80h
+	INT 13h
+	JC check_lba_support_no
+	MOV AX, 1
+	JMP check_lba_support_end
+check_lba_support_no:
+	MOV AX, 0
+check_lba_support_end:
+	POP DX
+	POP BX
+	RET
+
+	;; TODO: fix this.
+	
+    ;; #define DISK_LBA_READ 0x42
+    ;; #define DISK_LBA_WRITE 0x43
+    ;; char lba_action(
+    ;;     unsigned char drive,  // [AX]
+    ;;     unsigned char action,  // [DX]
+    ;;     LBA_Packet* packet,  // [BX]
+    ;; );
+	public lba_action_
+lba_action_:
+	PUSH BP
+	MOV BP, SP
+	
+	PUSH DS
+	PUSH CS
+	POP DS
+	MOV SI, BX
+	MOV AH, DL
+	MOV DL, AL
+	INT 13H
+	JC lba_action_error
+	POP DS
+	JMP lba_action_ok
+lba_action_error:
+	MOV AX, 0
+	JMP lba_action_end
+lba_action_ok:
+	MOV AX, 1
+	;; fall through.
+lba_action_end:
+	MOV SP, BP
+	POP BP
+	RET
+
 	;; char get_diskop_status(
 	;; 	char drive	// [AX]
 	;; )

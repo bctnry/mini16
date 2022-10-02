@@ -20,7 +20,7 @@ int strcmp(const char* lhs, const char* rhs) {
 }
 
 int strncmp(const char* lhs, const char* rhs, size_t count) {
-    unsigned short i = 0;
+    size_t i = 0;
     char a, b;
     while (i < count) {
         a = lhs[i];
@@ -35,11 +35,17 @@ int strncmp(const char* lhs, const char* rhs, size_t count) {
     return 0;
 }
 
-char* strchr(const char* str, char ch) {
+char* strcpy(char* dest, const char* src) {
+    size_t i = 0;
+    while (src[i]) { dest[i] = src[i]; i++; }
+    return dest;
+}
+
+char* strchr(char* str, char ch) {
     size_t i = 0;
     while (str[i] && (str[i] != ch)) { i++; }
     if (!str[i]) { return (char*)0; }
-    return &str[i];
+    return (char*)str+i;
 }
 
 size_t strlen(const char* str) {

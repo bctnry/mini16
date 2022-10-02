@@ -13,12 +13,17 @@ kernel:
 	wasm -0 src/kb/kb_int16.asm
 	wcc -0 -ms src/kb/kb.c
 	wasm -0 src/disk/disk_int13.asm
+	wcc -0 -ms src/disk/disk.c
 	wasm -0 src/term/cursor_int10.asm
 	wasm -0 src/term/term_int10.asm
 	wasm -0 src/task/int8.asm
 	wasm -0 src/util/power.asm
 	wcc -0 -ms src/term/vga.c
 	wcc -0 -ms src/term/term.c
+	wcc -0 -ms src/shell/fdisk/fdisk.c
+	wasm -0 src/vesa/vesa_asm.asm
+	wasm -0 src/term/mode12h.asm
+	wcc -0 -ms src/fs/fs.c
 	wcc -0 -ms src/shell/shell.c
 	wcc -0 -ms src/task/scheduler.c
 	wcc -0 -ms src/shell/parse.c

@@ -5,8 +5,15 @@
 #include "../cstdlib/string.h"
 #include "../util/debug.h"
 #include "../util/power.h"
+#include "../util/formatstr.h"
 #include "../disk/disk.h"
+
 #include "parse.h"
+
+#include "fdisk/fdisk.h"
+#include "../vesa/vesa.h"
+#include "../fs/fs.h"
+#include "../fat12/fat12.h"
 
 #define M_MIN(X, Y) (((X)<(Y))?(X):(Y))
 
@@ -14,12 +21,15 @@ const char* PROMPT = "& ";
 const char* UNKNOWN_COMMAND = "? Unknown command ";
 char cmdbuf[256];
 char tokenbuf[256];
+char strbuf[256];
 const char* AT_FORMAT_ERROR_HEAD = "? Format: ";
 const char* AT_READ_MEM_FORMAT = "@read_mem [n] [seg] [off]";
 const char* AT_WRITE_MEM_FORMAT = "@write_mem [seg] [off]";
 const char* AT_CHKDSK_FORMAT = "@disk_info [drive_n]";
-const char* AT_READ_DISK_FORMAT = "@read_disk [n] [seg] [off] [drive_n] [head] [cyl] [sec]";
-const char* AT_WRITE_DISK_FORMAT = "@write_disk [n] [seg] [off] [drive_n] [head] [cyl] [sec]";
+const char* AT_READ_DISK_FORMAT = "@read_disk [n] [seg] [off] [drive_n] [cyl] [head] [sec]";
+const char* AT_WRITE_DISK_FORMAT = "@write_disk [n] [seg] [off] [drive_n] [cyl] [head] [sec]";
+const char* AT_LBA_FORMAT = "@lba_read/write [drive_n] [n] [seg] [off] [lba_low32]";
+const char* AT_MOUNT_FORMAT = "@mount [drive_n] [fs_type]";
 const char* WRONG_DATA_FORMAT = "? Wrong data format";
 const char* DISK_OPERATION_ERROR = "? Disk operation error";
 
@@ -89,10 +99,13 @@ void at_read_mem(char* x) {
     base = (((unsigned long)seg)<<16)+off;
     ix = 0;
     do {
-        disp_word(seg); term_echo(':'); disp_word(off + (ix & 0xf0)); term_echo_str("   ");
+        // TODO: fix this.
+        disp_addr(base + ix);
+        term_echo_str("   ");
+
         for (i = 0; i < 16; i++) {
             if (ix >= n) { break; }
-            disp_byte(base[off + ix]);
+            disp_byte(((char far*)base)[ix]);
             term_echo(' ');
             ix++;
         }
@@ -121,18 +134,24 @@ void at_list_disk() {
     unsigned char drive_n;
     drive_n = 0;
     while (!get_drive_param(drive_n, &dparam)) {
-        disp_byte(drive_n); term_echo_str(": ");
-        disp_byte(dparam.max_head); term_echo(' ');
-        disp_word(dparam.max_cylinder); term_echo(' ');
-        disp_byte(dparam.max_sector); term_echo_newline();
+        sformat(strbuf, "%B: %B %W %B\n",
+            drive_n,
+            dparam.max_head,
+            dparam.max_cylinder,
+            dparam.max_sector
+        );
+        term_echo_str(strbuf);
         drive_n ++;
     }
     drive_n = 0x80;
     while (!get_drive_param(drive_n, &dparam)) {
-        disp_byte(drive_n); term_echo_str(": ");
-        disp_byte(dparam.max_head); term_echo(' ');
-        disp_word(dparam.max_cylinder); term_echo(' ');
-        disp_byte(dparam.max_sector); term_echo_newline();
+        sformat(strbuf, "%B: %B %W %B\n",
+            drive_n,
+            dparam.max_head,
+            dparam.max_cylinder,
+            dparam.max_sector
+        );
+        term_echo_str(strbuf);
         drive_n ++;
     }
 }
@@ -146,20 +165,15 @@ void at_disk_info(char* x) {
     }
     char_arg0 = get_drive_param(drive_n, &dparam);
     if (char_arg0) {
-        term_echo_str(DISK_OPERATION_ERROR);
-        term_echo_str(": ");
-        disp_byte(char_arg0);
-        term_echo(0x0d); term_echo(0x0a);
+        sformat(strbuf, "%s: %B\n", DISK_OPERATION_ERROR, char_arg0);
+        term_echo_str(strbuf);
     } else {
-        term_echo_str("Max Sector: ");
-        disp_byte(dparam.max_sector);
-        term_echo_newline();
-        term_echo_str("Max Cylinder: ");
-        disp_word(dparam.max_cylinder);
-        term_echo_newline();
-        term_echo_str("Max Head: ");
-        disp_byte(dparam.max_head);
-        term_echo_newline();
+        sformat(strbuf, "Max Sector: %B\nMax Cylinder: %W\nMax Head: %B\n",
+            dparam.max_sector,
+            dparam.max_cylinder,
+            dparam.max_head
+        );
+        term_echo_str(strbuf);
     }
 }
 
@@ -180,10 +194,10 @@ void at_read_disk(char* x) {
     if (!read_byte_token(&subj, &drive_n)) {
         _disp_format_error(AT_READ_DISK_FORMAT); return;
     }
-    if (!read_byte_token(&subj, &head)) {
+    if (!read_word_token(&subj, &cylinder)) {
         _disp_format_error(AT_READ_DISK_FORMAT); return;
     }
-    if (!read_word_token(&subj, &cylinder)) {
+    if (!read_byte_token(&subj, &head)) {
         _disp_format_error(AT_READ_DISK_FORMAT); return;
     }
     if (!read_byte_token(&subj, &sector)) {
@@ -216,10 +230,10 @@ void at_write_disk(char* x) {
     if (!read_byte_token(&subj, &drive_n)) {
         _disp_format_error(AT_WRITE_DISK_FORMAT); return;
     }
-    if (!read_byte_token(&subj, &head)) {
+    if (!read_word_token(&subj, &cylinder)) {
         _disp_format_error(AT_WRITE_DISK_FORMAT); return;
     }
-    if (!read_word_token(&subj, &cylinder)) {
+    if (!read_byte_token(&subj, &head)) {
         _disp_format_error(AT_WRITE_DISK_FORMAT); return;
     }
     if (!read_byte_token(&subj, &sector)) {
@@ -290,6 +304,126 @@ void at_apm_shutdown() {
     }
 }
 
+void at_vesa() {
+    VBEInfoStructure s;
+    unsigned char i = 0;
+    vesa_check_vbe(&s);
+    term_echo(s.signature[0]);
+    term_echo(s.signature[1]);
+    term_echo(s.signature[2]);
+    term_echo(s.signature[3]);
+    term_echo(' ');
+    disp_word(s.version);
+    term_echo_newline();
+    while (s.video_modes[i] != 0xffff) {
+        disp_word(s.video_modes[i]);
+        term_echo(' ');
+        i++;
+    }
+    term_echo_newline();
+}
+
+void at_lba(unsigned char action, char* x) {
+    LBA_Packet pkt;
+    char* subj = get_token(x, tokenbuf);
+    unsigned char drive;
+    char res;
+    pkt.zero = 0;
+    if (!read_byte_token(&subj, &drive)) {
+        _disp_format_error(AT_LBA_FORMAT); return;
+    }
+    if (!read_word_token(&subj, &pkt.n_sector)) {
+        _disp_format_error(AT_LBA_FORMAT); return;
+    }
+    if (!read_word_token(&subj, &pkt.buffer_segment)) {
+        _disp_format_error(AT_LBA_FORMAT); return;
+    }
+    if (!read_word_token(&subj, &pkt.buffer_offset)) {
+        _disp_format_error(AT_LBA_FORMAT); return;
+    }
+    if (!read_word_token(&subj, (unsigned short*)&pkt.address_low32)) {
+        _disp_format_error(AT_LBA_FORMAT); return;
+    }
+    res = lba_action(drive, action, &pkt);
+    if (!res) {
+        _disp_error("Error while LBA");
+    }
+}
+
+void at_mount(char* x) {
+    char drive_n, type;
+    char* subj = get_token(x, tokenbuf);
+    if (!read_byte_token(&subj, &drive_n)) {
+        _disp_format_error(AT_MOUNT_FORMAT); return;
+    }
+    if (!read_byte_token(&subj, &type)) {
+        _disp_format_error(AT_MOUNT_FORMAT); return;
+    }
+    fs_mount(drive_n, type);
+}
+
+void at_fat12_info(char* x) {
+    char drive_n;
+    char* subj = get_token(x, tokenbuf);
+    unsigned short maximum_root_len;
+    unsigned char i = 0;
+    size_t vx = 0;
+    unsigned char ix = 0;
+    char far* z = ((char far*)(0x0000d000));
+    if (!read_byte_token(&subj, &drive_n)) {
+        return;
+    }
+
+    read_sector(
+        (unsigned long)0x0000d000,
+        1,
+        drive_n,
+        0, 0, 1
+    );
+
+    maximum_root_len = ((FATDescriptor far*)z)->n_root_entry;
+    sformat(strbuf, "Max root entries: %W\n", maximum_root_len);
+    term_echo_str(strbuf);
+    term_echo_str("OEM Name: ");
+    for (vx = 0; vx < 8; vx++) {
+        term_echo(((FATDescriptor far*)z)->oem_name[vx]);
+    }
+    term_echo_newline();
+    sformat(strbuf, "Byte per sector: %W\nSector per cluster: %W\nReserved sector: %W\n",
+        ((FATDescriptor far*)z)->byte_per_sector,
+        ((FATDescriptor far*)z)->sector_per_cluster,
+        ((FATDescriptor far*)z)->n_reserved_sector
+    );
+    term_echo_str(strbuf);
+    // TODO: somehow the last field displays wrong. fix this.
+    sformat(strbuf, "No. FAT: %B\nNo. root entry: %W\nDescriptor: %B\nSector per FAT: %W\n",
+        ((FATDescriptor far*)z)->n_fat,
+        ((FATDescriptor far*)z)->n_root_entry,
+        ((FATDescriptor far*)z)->n_sector,
+        ((FATDescriptor far*)z)->media_descriptor,
+        ((FATDescriptor far*)z)->sector_per_fat
+    );
+}
+
+// char far* CWD = ((char far*)0x00000500);
+char* CWD = ((char*)0x0500);
+
+char at_chd(char* x) {
+    char drive_n;
+    char* subj = get_token(x, tokenbuf);
+    char z;
+    if (!read_byte_token(&subj, &drive_n)) {
+        term_echo_str("? No drive");
+        return;
+    }
+    z = drive_n >> 4;
+    CWD[1] = z >= 0x0a? z + 'A' - 0x0a : z + 0x30;
+    drive_n %= 0xf;
+    CWD[2] = drive_n >= 0x0a? drive_n + 'A' - 0x0a : drive_n + 0x30;
+    term_echo_str(CWD);
+    term_echo_newline();
+}
+void get_cluster(char* x);
 // `x` already trimmed left.
 void at_shell(char* x) {
     char* subj = get_token(x, tokenbuf);
@@ -309,6 +443,22 @@ void at_shell(char* x) {
         at_apm_load();
     } else if (strcmp(tokenbuf, "@apm_shutdown") == 0) {
         at_apm_shutdown();
+    } else if (strcmp(tokenbuf, "@vesa_chk") == 0) {
+        at_vesa();
+    } else if (strcmp(tokenbuf, "@lba_read") == 0) {
+        at_lba(DISK_LBA_READ, x);
+    } else if (strcmp(tokenbuf, "@lba_write") == 0) {
+        at_lba(DISK_LBA_WRITE, x);
+    } else if (strcmp(tokenbuf, "@mount") == 0) {
+        at_mount(x);
+    } else if (strcmp(tokenbuf, "@fat12_info") == 0) {
+        at_fat12_info(x);
+    } else if (strcmp(tokenbuf, "@chd") == 0) {
+        at_chd(x);
+    } else if (strcmp(tokenbuf, "@fdisk") == 0) {
+        fdisk_shell();
+    } else if (strcmp(tokenbuf, "@fat12_cluster") == 0) {
+        get_cluster(x);
     } else {
         vga_write_str(UNKNOWN_COMMAND, 0, 24);
         vga_write_str(x, strlen(UNKNOWN_COMMAND), 24);
@@ -317,30 +467,219 @@ void at_shell(char* x) {
     return;
 }
 
+char far* DISKBUFF = (char far*)0x0000d000;
+char far* FATBUFF = (char far*)0x0000d400;
 
-void shell(void) {
+
+// NOTE: this function always read from FAT1.
+// cluster_id shouldn't be bigger than:
+//     (fat_desc.sector_per_fat * fat_desc.byte_per_sector) / 1.5
+// for any cluster_id (start from 0)
+//     if even, lower byte at: cluster_id/2*3
+//              higher nibble at: (cluster_id)/2*3+1 lower nibble
+//     if odd, lower nibble at: cluster_id/2*3+1 higher nibble
+//             higher byte at: cluster_id/2*3+2
+// this will be the offset.
+// from the offset we calculate which sector of the FAT should be loaded.
+//     nth = offset / fat_desc.byte_per_sector
+unsigned short fat12_get_cluster(DriveParameter* dp, unsigned short cluster_id) {
+    FATDescriptor far* fat_desc;
+    unsigned short n;
+    unsigned short offset;
+    unsigned short nth;
+    unsigned short res;
+    char head, sector;
+    char drive_n;
+    unsigned short cylinder;
+    drive_n = (read_nibble_ch(CWD[1])<<4)|read_nibble_ch(CWD[2]);
+    fat_desc = (FATDescriptor far*)DISKBUFF;
+    n = fat_desc->n_reserved_sector;
+    offset = cluster_id/2*3+(cluster_id&1?1:0);
+    nth = offset / fat_desc->byte_per_sector;
+    lbs_to_chs(dp, n, &head, &sector, &cylinder);
+    read_sector(
+        FATBUFF,
+        1,
+        drive_n,
+        head,
+        cylinder,
+        sector
+    );
+    offset %= fat_desc->byte_per_sector;
+    res = (
+        cluster_id&1? FATBUFF[offset]>>4|(FATBUFF[offset+1]<<4)
+        : FATBUFF[offset]|(FATBUFF[offset+1]&0xf)
+    );
+    return res;
+}
+
+void get_cluster(char* x) {
+    DriveParameter dp;
+    char* subj = get_token(x, tokenbuf);
+    unsigned short n;
+    unsigned short res;
+    char drive_n;
+    
+    drive_n = (read_nibble_ch(CWD[1])<<4)|read_nibble_ch(CWD[2]);
+    get_drive_param(drive_n, &dp);
+    read_word_token(&subj, &n);
+    res = fat12_get_cluster(&dp, n);
+    disp_word(res);
+    term_echo_newline();
+}
+
+void ls() {
+    // drive: CMD+1, CMD+2
+    // path start: CMD+3
+    // 1.  check drive.
+    // 2.  check DMRT.
+    // 3.  unsupported 
+    char drive_n;
+    char sector_per_cluster;
+    char subj = &CWD[4];
+    char head, sec;
+    size_t i = 0, i2 = 0, page_i = 0, whole_i = 0;
+    unsigned short cyl;
+    // NOTE: this will only support drives less than ~32MBytes.
+    unsigned short temp;
+    char bound;
+    DriveParameter dp;
+    FATDirectoryEntry far* dir_entry_pointer;
+
+    drive_n = (read_nibble_ch(CWD[1])<<4)|read_nibble_ch(CWD[2]);
+    get_drive_param(drive_n, &dp);
+    switch (fs_gettype(drive_n)) {
+        case 0: {
+            term_echo_str("? Drive not mounted\n"); return;
+        }
+        case 1: {
+            goto fat12;
+        }
+        default: {
+            sformat("? Mount type not supported: %B\n", fs_gettype(drive_n));
+            term_echo_str(strbuf);
+            return;
+        }
+    }
+
+    fat12:
+    // read first sector into diskbuff.
+    read_sector(DISKBUFF, 1, drive_n, 0, 0, 1);
+    sector_per_cluster = ((FATDescriptor*)DISKBUFF)->sector_per_cluster;
+    // find & read dir.
+    temp = (
+        ((FATDescriptor*)DISKBUFF)->n_reserved_sector
+        + ((FATDescriptor*)DISKBUFF)->sector_per_fat
+            * ((FATDescriptor*)DISKBUFF)->n_fat
+    );
+    disp_word(temp); term_echo_newline();
+    // NOTE: first bound is the root dir bound.
+    bound = ((FATDescriptor*)DISKBUFF)->byte_per_sector / 32;
+
+    // chs -> nsec = c * (dp.sec*dp.h) + h * (dp.sec) + s
+    // nsec -> chs = (
+    //      nsec / dp.sec / dp.h
+    //      nsec / dp.sec % dp.h
+    //      nsec % dp.sec
+    // )
+    lba_to_chs(&dp, temp, &head, &sec, &cyl);
+    dir_entry_pointer = ((FATDirectoryEntry far*)(DISKBUFF + ((FATDescriptor*)DISKBUFF)->byte_per_sector));
+    read_sector((char far*)dir_entry_pointer,
+        1,
+        drive_n,
+        head,
+        cyl,
+        sec
+    );
+    // while whole_i < bound, the whole dir is not checked.
+    // a dir can span multiple page.
+    // while no entry in current page matches:
+    //     1. read next page.
+    //     2. rinse and repeat
+    // while a entry is match to current request:
+    //     1. get starting_cluster.
+    //     1. read the cluster.
+    //     2. 
+    /*
+    while (whole_i < bound) {
+        while (page_i < page_len && dir_entry_pointer[page_i].name[0]) {
+            // check each page.
+            i = 0; i2 = 0;
+            while (
+                subj[i]
+                && subj[i] != '/'
+                && i < 8
+                && dir_entry_pointer[page_i].name[i] != ' '
+                && subj[i] == dir_entry_pointer[page_i].name[i]
+            ) {
+                i++;
+            }
+            // NOTE: the following are the condition for continuing to the match for ext_name.
+            // if we failed at this point we should just go to the next item.
+            if (!(!subj[i] || subj[i] == '/' || i == 8 || dir_entry_pointer[page_i].name[i] == ' ')) {
+                page_i++;
+                continue;
+            }
+            while (
+                subj[i]
+                && subj[i] != '/'
+                && i2 < 3
+                && dir_entry_pointer->ext_name[i2] != ' '
+                && subj[i] == dir_entry_pointer->name[i2]
+            ) {
+                i++;
+                i2++;
+            }
+            if (!(!subj[i] || subj[i] == '/' || i == 8 || dir_entry_pointer[page_i].name[i] == ' ')) {
+                page_i++;
+                continue;
+            }
+            subj = &subj[i+1];
+            page_i ++;
+        }
+
+    }
+    */
+}
+
+void _shell(void) {
     size_t i = 0;
     char* x = cmdbuf;
-    vga_write_str_c("Mini16 2022.5.27", COLOR_BG_BLACK|COLOR_FG_WHITE|COLOR_FG_BRIGHT, 0, 23);
+    cursor_set_pos(0, 24);
     for (;;) {
-        vga_set_color(COLOR_BG_BLACK|COLOR_FG_WHITE|COLOR_FG_BRIGHT, 0, 24, 2, 25);
-        vga_write_str(PROMPT, 0, 24);
-        cursor_set_pos(2, 24);
+        term_echo_str(PROMPT);
         kb_readline(cmdbuf, 256, 0, 0);
         while (cmdbuf[i] && (cmdbuf[i] == ' ' || cmdbuf[i] == '\t')) { i++; }
+        if (!cmdbuf[0]) { continue; }
         x = &cmdbuf[i];
         if (x[0] == '@') {
             at_shell(x);
+        } else if (strcmp(x, "ver") == 0) {
+            term_echo_str("Mini16 2022.10.2\n");
         } else if (strcmp(x, "exit") == 0) {
             at_apm_shutdown();
             break;
+        } else if (strcmp(x, "ls") == 0) {
+            ls();
+        } else if (strcmp(x, "cwd") == 0) {
+            term_echo_str(CWD);
+            term_echo_newline();
         } else if (strcmp(x, "clear") == 0) {
             vga_flush_up(0, 25, 0, 1);
         } else {
             // vga_flush_up(0, 25, 1, 1);
-            vga_write_str(UNKNOWN_COMMAND, 0, 24);
-            vga_write_str(x, strlen(UNKNOWN_COMMAND), 24);
-            vga_flush_up(0, 25, 1, 1);
+            term_echo_str(UNKNOWN_COMMAND);
+            term_echo_str(x);
+            term_echo_newline();
         }
     }
+}
+
+void init_cwd() {
+    strcpy(CWD, "/00/");
+}
+
+void shell(void) {
+    init_cwd();
+    _shell();
 }

@@ -7,8 +7,9 @@
 
 int strcmp(const char* lhs, const char* rhs);
 int strncmp(const char* lhs, const char* rhs, size_t count);
-char* strchr(const char* str, char ch);
+char* strchr(char* str, char ch);
 size_t strlen(const char* str);
+char* strcpy(char* dest, const char* src);
 
 char isdigit(char x);
 char isxdigit(char x);

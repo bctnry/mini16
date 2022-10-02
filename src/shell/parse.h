@@ -3,7 +3,7 @@
 
 char* get_token(const char* str, char* target);
 char read_nibble_ch(char x);
-unsigned short read_word(const char* str);
+unsigned short int read_word(const char* str);
 unsigned char read_byte(const char* str);
 
 #endif

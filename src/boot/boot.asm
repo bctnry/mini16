@@ -64,7 +64,7 @@ mem_detect_error:
 load_kernel:
         ;; load kernel.
         MOV AH, 2
-        MOV AL, 16              ; 16 sector 8KB
+        MOV AL, 32              ; 32 sector 16KB
         MOV CH, 0
         MOV CL, 2
         MOV DH, 0

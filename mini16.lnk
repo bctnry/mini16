@@ -10,12 +10,16 @@ file cursor_int10.o, term_int10.o, vga.o, term.o
 
 file kb_int16.o, kb.o
 
-file disk_int13.o
+file disk_int13.o, disk.o
 
 file int8.o, scheduler.o
 
 file power.o
 
-file parse.o, shell.o
+file parse.o, fdisk.o, shell.o
+
+file vesa_asm.o
+
+file fs.o
 
 file main.o
