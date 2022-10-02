@@ -1,7 +1,7 @@
 #include "../cstdlib/string.h"
 #include "../term/vga.h"
 
-char* get_token(const char* str, char* target) {
+char* get_token(char* str, char* target) {
     size_t i = 0, j = 0;
     while (str[i] && (str[i] == ' ' || str[i] == '\t')) { i++; }
     while (str[i] && str[i] != ' ' && str[i] != '\t') {

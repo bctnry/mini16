@@ -32,7 +32,7 @@ _cmain:
 
         PUSH AX
         MOV AH, 0
-        MOV AL, 3
+        MOV AL, 8h
         INT 10h
         POP AX
 

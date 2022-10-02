@@ -1,5 +1,4 @@
 #include "kb.h"
-#include "../term/vga.h"
 #include "../term/cursor.h"
 #include "../term/term.h"
 
@@ -35,7 +34,10 @@ signed char kb_readline(char* buffer, unsigned short bufsize, char no_echo, char
             case 0x08: {
                 if (i > 0) {
                     i--;
-                    vga_write_ch_at_cursor(' ');
+                    term_echo(' ');
+                    curpos = cursor_get_pos();
+                    curpos--;
+                    cursor_set_pos((char)((curpos&0xff)), (char)((curpos>>8)));
                 } else {
                     curpos = cursor_get_pos();
                     curpos++;

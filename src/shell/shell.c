@@ -1,4 +1,3 @@
-#include "../term/vga.h"
 #include "../term/term.h"
 #include "../term/cursor.h"
 #include "../kb/kb.h"
@@ -10,7 +9,6 @@
 
 #include "parse.h"
 
-#include "fdisk/fdisk.h"
 #include "../vesa/vesa.h"
 #include "../fs/fs.h"
 #include "../fat12/fat12.h"
@@ -34,14 +32,14 @@ const char* WRONG_DATA_FORMAT = "? Wrong data format";
 const char* DISK_OPERATION_ERROR = "? Disk operation error";
 
 void _disp_error(const char* errormsg) {
-    vga_write_str(errormsg, 0, 24);
-    vga_flush_up(0, 25, 1, 1);
+    term_echo_str(errormsg);
+    term_echo_newline();
 }
 
 void _disp_format_error(const char* errormsg) {
-    vga_write_str(AT_FORMAT_ERROR_HEAD, 0, 24);
-    vga_write_str(errormsg, 10, 24);
-    vga_flush_up(0, 25, 1, 1);
+    term_echo_str(AT_FORMAT_ERROR_HEAD);
+    term_echo_str(errormsg);
+    term_echo_newline();
 }
 
 char read_word_token(char** x, unsigned short* n) {
@@ -96,7 +94,7 @@ void at_read_mem(char* x) {
     if (!read_word_token(&subj, &off)) {
         _disp_format_error(AT_READ_MEM_FORMAT); return;
     }
-    base = (((unsigned long)seg)<<16)+off;
+    base = (char far*)((((unsigned long)seg)<<16)+off);
     ix = 0;
     do {
         // TODO: fix this.
@@ -111,7 +109,7 @@ void at_read_mem(char* x) {
         }
         term_echo_newline();
     } while (ix < n);
-    vga_flush_up(0, 25, 1, 1);
+    term_echo_newline();
 }
 
 void at_write_mem(char* x) {
@@ -124,9 +122,9 @@ void at_write_mem(char* x) {
     if (!read_word_token(&subj, &off)) {
         _disp_format_error(AT_WRITE_MEM_FORMAT); return;
     }
-    base = (((unsigned long)seg)<<16)+off;
+    base = (char far*)((((unsigned long)seg)<<16)+off);
     writemem_shell(base);
-    vga_flush_up(0, 25, 1, 1);
+    term_echo_newline();
 }
 
 void at_list_disk() {
@@ -203,7 +201,7 @@ void at_read_disk(char* x) {
     if (!read_byte_token(&subj, &sector)) {
         _disp_format_error(AT_READ_DISK_FORMAT); return;
     }
-    base = (((unsigned long)seg)<<16)+off;
+    base = (char far*)((((unsigned long)seg)<<16)+off);
     read_sector(base, char_arg0, drive_n, head, cylinder, sector);
     if (get_diskop_status(drive_n)) {
         term_echo_str(DISK_OPERATION_ERROR);
@@ -239,7 +237,7 @@ void at_write_disk(char* x) {
     if (!read_byte_token(&subj, &sector)) {
         _disp_format_error(AT_WRITE_DISK_FORMAT); return;
     }
-    base = (((unsigned long)seg)<<16)+off;
+    base = (char far*)((((unsigned long)seg)<<16)+off);
     write_sector(base, char_arg0, drive_n, head, cylinder, sector);
     if (get_diskop_status(drive_n)) {
         term_echo_str(DISK_OPERATION_ERROR);
@@ -375,7 +373,7 @@ void at_fat12_info(char* x) {
     }
 
     read_sector(
-        (unsigned long)0x0000d000,
+        z,
         1,
         drive_n,
         0, 0, 1
@@ -408,7 +406,7 @@ void at_fat12_info(char* x) {
 // char far* CWD = ((char far*)0x00000500);
 char* CWD = ((char*)0x0500);
 
-char at_chd(char* x) {
+void at_chd(char* x) {
     char drive_n;
     char* subj = get_token(x, tokenbuf);
     char z;
@@ -455,14 +453,10 @@ void at_shell(char* x) {
         at_fat12_info(x);
     } else if (strcmp(tokenbuf, "@chd") == 0) {
         at_chd(x);
-    } else if (strcmp(tokenbuf, "@fdisk") == 0) {
-        fdisk_shell();
-    } else if (strcmp(tokenbuf, "@fat12_cluster") == 0) {
-        get_cluster(x);
     } else {
-        vga_write_str(UNKNOWN_COMMAND, 0, 24);
-        vga_write_str(x, strlen(UNKNOWN_COMMAND), 24);
-        vga_flush_up(0, 25, 1, 1);
+        term_echo_str(UNKNOWN_COMMAND);
+        term_echo_str(x);
+        term_echo_newline();
     }
     return;
 }
@@ -482,6 +476,7 @@ char far* FATBUFF = (char far*)0x0000d400;
 // this will be the offset.
 // from the offset we calculate which sector of the FAT should be loaded.
 //     nth = offset / fat_desc.byte_per_sector
+/*
 unsigned short fat12_get_cluster(DriveParameter* dp, unsigned short cluster_id) {
     FATDescriptor far* fat_desc;
     unsigned short n;
@@ -527,7 +522,7 @@ void get_cluster(char* x) {
     disp_word(res);
     term_echo_newline();
 }
-
+*/
 void ls() {
     // drive: CMD+1, CMD+2
     // path start: CMD+3
@@ -536,7 +531,7 @@ void ls() {
     // 3.  unsupported 
     char drive_n;
     char sector_per_cluster;
-    char subj = &CWD[4];
+    char subj = CWD[4];
     char head, sec;
     size_t i = 0, i2 = 0, page_i = 0, whole_i = 0;
     unsigned short cyl;
@@ -556,7 +551,7 @@ void ls() {
             goto fat12;
         }
         default: {
-            sformat("? Mount type not supported: %B\n", fs_gettype(drive_n));
+            sformat(strbuf, "? Mount type not supported: %B\n", fs_gettype(drive_n));
             term_echo_str(strbuf);
             return;
         }
@@ -664,10 +659,7 @@ void _shell(void) {
         } else if (strcmp(x, "cwd") == 0) {
             term_echo_str(CWD);
             term_echo_newline();
-        } else if (strcmp(x, "clear") == 0) {
-            vga_flush_up(0, 25, 0, 1);
         } else {
-            // vga_flush_up(0, 25, 1, 1);
             term_echo_str(UNKNOWN_COMMAND);
             term_echo_str(x);
             term_echo_newline();
