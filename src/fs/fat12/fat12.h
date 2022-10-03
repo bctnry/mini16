@@ -34,5 +34,4 @@ typedef _Packed struct {
     char file_size[4];
 } FATDirectoryEntry;
 
-
 #endif

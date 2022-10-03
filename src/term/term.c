@@ -4,7 +4,7 @@ void term_echo_newline(void) {
     term_echo(0x0d); term_echo(0x0a);
 }
 
-void term_echo_str(const char* x) {
+void term_echo_str(const char far* x) {
     unsigned short i = 0;
     while (x[i]) {
         switch (x[i]) {
@@ -21,4 +21,3 @@ void term_echo_str(const char* x) {
         }
     }
 }
-

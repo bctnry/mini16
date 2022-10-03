@@ -1,0 +1,130 @@
+"Building bootloader"
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\boot\boot.asm: 142 lines, 0 warnings, 0 errors
+Open Watcom Linker Version 2.0 beta Mar 14 2022 00:57:07 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+loading object files
+creating map file
+creating a RAW Binary Image executable
+"Building kernel"
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\init.asm: 54 lines, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\cstdlib\string.c: 64 lines, included 71, 0 warnings, 0 errors
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\kb\kb_int16.asm: 49 lines, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\kb\kb.c: 60 lines, included 102, 0 warnings, 0 errors
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\disk\disk_int13.asm: 258 lines, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\disk\disk.c: 24 lines, included 141, 0 warnings, 0 errors
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\term\cursor_int10.asm: 57 lines, 0 warnings, 0 errors
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\term\term_int10.asm: 40 lines, 0 warnings, 0 errors
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\util\power.asm: 138 lines, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\term\term.c: 24 lines, included 64, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\fs\fs.c: 23 lines, included 111, 0 warnings, 0 errors
+Open Watcom Assembler Version 2.0 beta Mar 14 2022 00:55:59 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1992-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\vesa\vesa_asm.asm: 31 lines, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\shell\cwd.c: 42 lines, included 86, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\shell\shell.c: 615 lines, included 829, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\shell\parse.c: 44 lines, included 114, 0 warnings, 0 errors
+Open Watcom C x86 16-bit Optimizing Compiler
+Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+.\src\main.c: 9 lines, included 67, 0 warnings, 0 errors
+Open Watcom Linker Version 2.0 beta Mar 14 2022 00:57:07 (64-bit)
+Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+loading object files
+searching libraries
+creating map file
+creating a DOS .COM executable

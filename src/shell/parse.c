@@ -13,7 +13,7 @@ char* get_token(char* str, char* target) {
     return &str[i];
 }
 
-char read_nibble_ch(char x) {
+inline char read_nibble_ch(char x) {
     char res = x >= 'a'? (x - 'a' + 0x0a) : x >= 'A'? (x - 'A' + 0x0a) : x - '0';
     return res;
 }

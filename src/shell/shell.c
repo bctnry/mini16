@@ -1,3 +1,4 @@
+#include "../const.h"
 #include "../term/term.h"
 #include "../term/cursor.h"
 #include "../kb/kb.h"
@@ -8,10 +9,11 @@
 #include "../disk/disk.h"
 
 #include "parse.h"
+#include "cwd.h"
 
 #include "../vesa/vesa.h"
 #include "../fs/fs.h"
-#include "../fat12/fat12.h"
+#include "../fs/fat12/fat12.h"
 
 #define M_MIN(X, Y) (((X)<(Y))?(X):(Y))
 
@@ -403,22 +405,15 @@ void at_fat12_info(char* x) {
     );
 }
 
-// char far* CWD = ((char far*)0x00000500);
-char* CWD = ((char*)0x0500);
-
 void at_chd(char* x) {
     char drive_n;
     char* subj = get_token(x, tokenbuf);
-    char z;
     if (!read_byte_token(&subj, &drive_n)) {
         term_echo_str("? No drive");
         return;
     }
-    z = drive_n >> 4;
-    CWD[1] = z >= 0x0a? z + 'A' - 0x0a : z + 0x30;
-    drive_n %= 0xf;
-    CWD[2] = drive_n >= 0x0a? drive_n + 'A' - 0x0a : drive_n + 0x30;
-    term_echo_str(CWD);
+    cwd_set_drive_n(drive_n);
+    term_echo_str(CWD_FAR);
     term_echo_newline();
 }
 void get_cluster(char* x);
@@ -465,64 +460,6 @@ char far* DISKBUFF = (char far*)0x0000d000;
 char far* FATBUFF = (char far*)0x0000d400;
 
 
-// NOTE: this function always read from FAT1.
-// cluster_id shouldn't be bigger than:
-//     (fat_desc.sector_per_fat * fat_desc.byte_per_sector) / 1.5
-// for any cluster_id (start from 0)
-//     if even, lower byte at: cluster_id/2*3
-//              higher nibble at: (cluster_id)/2*3+1 lower nibble
-//     if odd, lower nibble at: cluster_id/2*3+1 higher nibble
-//             higher byte at: cluster_id/2*3+2
-// this will be the offset.
-// from the offset we calculate which sector of the FAT should be loaded.
-//     nth = offset / fat_desc.byte_per_sector
-/*
-unsigned short fat12_get_cluster(DriveParameter* dp, unsigned short cluster_id) {
-    FATDescriptor far* fat_desc;
-    unsigned short n;
-    unsigned short offset;
-    unsigned short nth;
-    unsigned short res;
-    char head, sector;
-    char drive_n;
-    unsigned short cylinder;
-    drive_n = (read_nibble_ch(CWD[1])<<4)|read_nibble_ch(CWD[2]);
-    fat_desc = (FATDescriptor far*)DISKBUFF;
-    n = fat_desc->n_reserved_sector;
-    offset = cluster_id/2*3+(cluster_id&1?1:0);
-    nth = offset / fat_desc->byte_per_sector;
-    lbs_to_chs(dp, n, &head, &sector, &cylinder);
-    read_sector(
-        FATBUFF,
-        1,
-        drive_n,
-        head,
-        cylinder,
-        sector
-    );
-    offset %= fat_desc->byte_per_sector;
-    res = (
-        cluster_id&1? FATBUFF[offset]>>4|(FATBUFF[offset+1]<<4)
-        : FATBUFF[offset]|(FATBUFF[offset+1]&0xf)
-    );
-    return res;
-}
-
-void get_cluster(char* x) {
-    DriveParameter dp;
-    char* subj = get_token(x, tokenbuf);
-    unsigned short n;
-    unsigned short res;
-    char drive_n;
-    
-    drive_n = (read_nibble_ch(CWD[1])<<4)|read_nibble_ch(CWD[2]);
-    get_drive_param(drive_n, &dp);
-    read_word_token(&subj, &n);
-    res = fat12_get_cluster(&dp, n);
-    disp_word(res);
-    term_echo_newline();
-}
-*/
 void ls() {
     // drive: CMD+1, CMD+2
     // path start: CMD+3
@@ -531,7 +468,7 @@ void ls() {
     // 3.  unsupported 
     char drive_n;
     char sector_per_cluster;
-    char subj = CWD[4];
+    char subj = CWD_NEAR[4];
     char head, sec;
     size_t i = 0, i2 = 0, page_i = 0, whole_i = 0;
     unsigned short cyl;
@@ -541,7 +478,7 @@ void ls() {
     DriveParameter dp;
     FATDirectoryEntry far* dir_entry_pointer;
 
-    drive_n = (read_nibble_ch(CWD[1])<<4)|read_nibble_ch(CWD[2]);
+    drive_n = cwd_get_drive_n();
     get_drive_param(drive_n, &dp);
     switch (fs_gettype(drive_n)) {
         case 0: {
@@ -650,14 +587,14 @@ void _shell(void) {
         if (x[0] == '@') {
             at_shell(x);
         } else if (strcmp(x, "ver") == 0) {
-            term_echo_str("Mini16 2022.10.2\n");
+            term_echo_str("Mini16 2022.10.3\n");
         } else if (strcmp(x, "exit") == 0) {
             at_apm_shutdown();
             break;
         } else if (strcmp(x, "ls") == 0) {
             ls();
         } else if (strcmp(x, "cwd") == 0) {
-            term_echo_str(CWD);
+            term_echo_str(CWD_FAR);
             term_echo_newline();
         } else {
             term_echo_str(UNKNOWN_COMMAND);
@@ -668,7 +605,7 @@ void _shell(void) {
 }
 
 void init_cwd() {
-    strcpy(CWD, "/00/");
+    strcpy(CWD_NEAR, "/00/");
 }
 
 void shell(void) {

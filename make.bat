@@ -39,6 +39,7 @@ wasm -0 .\src\util\power.asm -fo=power.o
 wcc -0 -ms .\src\term\term.c -fo=term.o
 wcc -0 -ms .\src\fs\fs.c -fo=fs.o
 wasm -0 .\src\vesa\vesa_asm.asm -fo=vesa_asm.o
+wcc -0 -ms .\src\shell\cwd.c -fo=cwd.o
 wcc -0 -ms .\src\shell\shell.c -fo=shell.o
 wcc -0 -ms .\src\shell\parse.c -fo=parse.o
 wcc -0 -ms .\src\main.c -fo=main.o

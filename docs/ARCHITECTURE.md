@@ -41,12 +41,10 @@ The bootloader will reside in `0000:7c00`~`0000:7dff` but in Mini16 this piece o
 
 ````
 0000:0500  |----------|
-0000:05ff  |    CWD   |  (256B)
+0000:05ff  |   DMRT   |  (256B)
 0000:0600  |----------|
-           |    ENV   |  (4KB)
+           |   CWD    |  (4KB)
 0000:1600  |----------|
-0000:16ff  |   DMRT   |  (256B)
-0000:1700  |----------|
            |          |  (2KB)
 0000:2000  |----------|
 0000:cfff  |  KERNEL  |  (44KB)
@@ -58,14 +56,6 @@ The bootloader will reside in `0000:7c00`~`0000:7dff` but in Mini16 this piece o
 0000:ffff  | KRNL STK |  (512B)
 1000:0000  |----------|
 ````
-
-#### Current working directory
-
-Because we'll only be using FAT12/16 every file will have a maximum name length of 13 bytes, so a 256-byte maximum roughly equals to 20 layers of directories, which is enough for our case.
-
-#### Environment variables
-
-Starting from `0000:0600` to `0000:15ff` is reserved for environment variables in the format of `VAR_NAME=var_value` or `VAR_NAME=var_value1;var_value2;...;var_value_n` if `VAR_NAME` should contain several items (e.g. `PATH`), separated by `\n` (`0xa`).
 
 #### DMRT: Drive Mounting Record Table
 
@@ -87,38 +77,6 @@ File system id table:
 0000:d400 |------------|
 0000:d5ff | CLUS. SEC. |
 0000:d600 |------------|
-```
-
-## Memory map of the kernel section
-
-<!-- 0000~00ff  256B -->
-<!-- 0000~01ff  512B -->
-<!-- 0000~03ff  1KB -->
-<!-- 0000~07ff  2KB -->
-<!-- 0000~0fff  4KB -->
-<!-- 0000~1fff  8KB -->
-<!-- 0000~3fff  16KB -->
-<!-- 0000~ffff  64KB -->
-
-
-```
-0000:1400  |----------|
-           | KRNLCODE |  (21KB)
-0000:6800  |----------|  
-           | DISKBUFF |  (4KB)
-0000:7800  |----------|
-           | RESERVED |  (512B)
-0000:7a00  |----------|  
-           |   STACK  |  (256B)
-0000:7bff  |----------|
-```
-
-## ".EX" file
-
-
-```
-DB 'EX'         ;; magic number at header.
-DW 0            ;; init 
 ```
 
 ## Multitasking
