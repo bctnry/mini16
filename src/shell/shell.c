@@ -448,6 +448,16 @@ void at_shell(char* x) {
         at_fat12_info(x);
     } else if (strcmp(tokenbuf, "@chd") == 0) {
         at_chd(x);
+    } else if (strcmp(tokenbuf, "@up") == 0) {
+        cwd_goto_parent();
+        term_echo_str(CWD_NEAR);
+        term_echo_newline();
+    } else if (strcmp(tokenbuf, "@cd") == 0) {
+        while (*subj && *subj == ' ') { subj++; }
+        cwd_goto(subj);
+        term_echo_str(CWD_NEAR);
+        term_echo_newline();
+
     } else {
         term_echo_str(UNKNOWN_COMMAND);
         term_echo_str(x);
@@ -606,6 +616,7 @@ void _shell(void) {
 
 void init_cwd() {
     strcpy(CWD_NEAR, "/00/");
+    *(unsigned short far*)((char far*)0x00000600) = 4;
 }
 
 void shell(void) {

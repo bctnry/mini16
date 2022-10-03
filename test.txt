@@ -97,14 +97,14 @@ Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
 Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
 Source code is available under the Sybase Open Watcom Public License.
 See http://www.openwatcom.org/ for details.
-.\src\shell\cwd.c: 42 lines, included 86, 0 warnings, 0 errors
+.\src\shell\cwd.c: 76 lines, included 160, 0 warnings, 0 errors
 Open Watcom C x86 16-bit Optimizing Compiler
 Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
 Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
 Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
 Source code is available under the Sybase Open Watcom Public License.
 See http://www.openwatcom.org/ for details.
-.\src\shell\shell.c: 615 lines, included 829, 0 warnings, 0 errors
+.\src\shell\shell.c: 626 lines, included 829, 0 warnings, 0 errors
 Open Watcom C x86 16-bit Optimizing Compiler
 Version 2.0 beta Mar 14 2022 01:01:20 (64-bit)
 Copyright (c) 2002-2022 The Open Watcom Contributors. All Rights Reserved.
