@@ -1,10 +1,10 @@
 #ifndef __MINI16_FAT12_FAT12
 #define __MINI16_FAT12_FAT12
 
-typedef _Packed struct {
+typedef _Packed struct FATDescriptor {
     char jmp[3];
     char oem_name[8];
-    unsigned short byte_per_sector;
+    unsigned short bytes_per_sector;
     char sector_per_cluster;
     unsigned short n_reserved_sector;
     char n_fat;
@@ -14,7 +14,7 @@ typedef _Packed struct {
     unsigned short sector_per_fat;
 } FATDescriptor;
 
-typedef _Packed struct {
+typedef _Packed struct FATDirectoryEntry {
     char name[8];
     char ext_name[3];
     char attr;
@@ -31,7 +31,60 @@ typedef _Packed struct {
     unsigned short last_modified_time;
     unsigned short last_modified_date;
     unsigned short start_of_file;
-    char file_size[4];
+    unsigned long file_size;
 } FATDirectoryEntry;
 
+
+typedef struct FATClusterPointer {
+    unsigned short cluster_id;
+    unsigned short cluster_value;
+} FATClusterPointer;
+
+extern char fat12_load_fat_table(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        unsigned short n
+);
+unsigned short fat12_groupid_of_cluster(
+        struct FATDescriptor far* desc,
+        unsigned short cluster_id
+);
+unsigned short fat12_cluster_to_lba(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        unsigned short cluster_id
+);
+void fat12_iterate_over_dir(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        struct FATClusterPointer far* cp,
+        // return 1 if the iteration should not go further.
+        char(*f)(struct FATDirectoryEntry far* x)
+);
+char fat12_load_cluster(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        char far* target,
+        unsigned short cluster_id
+);
+void fat12_get_cluster_value_of(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        struct FATClusterPointer far* cp
+);
+char fat12_next_cluster(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        struct FATClusterPointer far* cp
+);
+char fat12_match_filename(
+        char far* subj,
+        struct FATDirectoryEntry far* obj
+);
+struct FATDirectoryEntry far* fat12_find_entry_in_directory(
+        struct DriveParameter far* dp,
+        struct FATDescriptor far* desc,
+        struct FATClusterPointer far* cp,
+        char far* subj
+);
 #endif

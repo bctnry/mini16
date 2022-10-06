@@ -20,6 +20,7 @@ kernel:
 	wcc -0 -ms src/term/term.c
 	wasm -0 src/vesa/vesa_asm.asm
 	wcc -0 -ms src/fs/fs.c
+	wcc -0 -ms src/fs/fat12/fat12.c -fo fs_fat12.o
 	wcc -0 -ms src/shell/cwd.c
 	wcc -0 -ms src/shell/shell.c
 	wcc -0 -ms src/shell/parse.c

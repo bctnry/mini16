@@ -19,6 +19,6 @@ file parse.o, cwd.o, shell.o
 
 file vesa_asm.o
 
-file fs.o
+file fs.o, fs_fat12.o
 
 file main.o

@@ -25,8 +25,8 @@ void disp_addr(void far* x) {
     disp_word((unsigned short)(((unsigned long)x)&0xffff));
 }
 
-void disp_nstr(size_t n, char* x) {
-    size_t i = 0; while (x[i]) { term_echo(x[i]); i++; }
+void disp_nstr(unsigned short n, char* x) {
+    unsigned short i = 0; while (x[i]) { term_echo(x[i]); i++; }
 }
 
 

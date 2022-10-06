@@ -19,4 +19,9 @@
 #define DISKBUFF_DIRSEC_NEAR ((char*)0xd200)
 #define DISKBUFF_CLUSSEC_NEAR ((char*)0xd400)
 
+
+#define CWD_CLUSTER_POINTER_FAR ((FATClusterPointer far*)0x0000dc00)
+#define CWD_DRIVE_PARAMETER_POINTER ((DriveParameter far*)0x0000de00)
+#define CWD_DRIVE_PARAMETER_POINTER_NEAR ((DriveParameter*)0xde00)
+
 #endif

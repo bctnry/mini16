@@ -2,10 +2,11 @@
 #define __MINI16_DISK_DISK
 #include "../util/visual_hint.h"
 
-typedef struct {
+typedef struct DriveParameter {
     unsigned char max_head;
     unsigned char max_sector;
     unsigned short int max_cylinder;
+    unsigned char id;
 } DriveParameter;
 
 typedef struct {
@@ -54,13 +55,13 @@ extern char lba_write_sector(
 extern char get_diskop_status(char drive);
 extern char get_drive_param(char drive, DriveParameter* param);
 
-void lba_to_chs(DriveParameter* param,
+void lba_to_chs(DriveParameter far* param,
     unsigned short n,
     char* head,
     char* sector,
     unsigned short* cylinder
 );
-void chs_to_lba(DriveParameter* param,
+void chs_to_lba(DriveParameter far* param,
     char head,
     char sector,
     unsigned short cylinder,

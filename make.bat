@@ -38,6 +38,7 @@ wasm -0 .\src\term\term_int10.asm -fo=term_int10.o
 wasm -0 .\src\util\power.asm -fo=power.o
 wcc -0 -ms .\src\term\term.c -fo=term.o
 wcc -0 -ms .\src\fs\fs.c -fo=fs.o
+wcc -0 -ms .\src\fs\fat12\fat12.c -fo=fs_fat12.o
 wasm -0 .\src\vesa\vesa_asm.asm -fo=vesa_asm.o
 wcc -0 -ms .\src\shell\cwd.c -fo=cwd.o
 wcc -0 -ms .\src\shell\shell.c -fo=shell.o

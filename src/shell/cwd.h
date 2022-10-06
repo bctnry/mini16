@@ -1,6 +1,7 @@
 #ifndef __MINI16_SHELL_CWD
 #define __MINI16_SHELL_CWD
 
+extern char cwd_single_goto(const char* str);
 extern void cwd_goto(const char* str);
 extern char cwd_get_drive_n();
 extern void cwd_goto_parent();

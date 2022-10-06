@@ -21,3 +21,10 @@ void term_echo_str(const char far* x) {
         }
     }
 }
+
+void term_echo_nstr(const char far* x, unsigned short n) {
+    unsigned short i = 0;
+    while (i < n) {
+        term_echo(x[i]); i++;
+    }
+}

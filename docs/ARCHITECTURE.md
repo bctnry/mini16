@@ -75,9 +75,15 @@ File system id table:
 0000:d200 |------------| 
 0000:d3ff |  DIR SEC.  |
 0000:d400 |------------|
-0000:d5ff | CLUS. SEC. |
-0000:d600 |------------|
+0000:dbff | CLUS. SEC. |
+0000:dc00 |------------|
+0000:ddff |   FS PTR   |
+0000:de00 |------------|
+0000:dfff |  FILEBUFF  |
+0000:e000 |------------|
 ```
+
+FSPTR is used to hold stuff. 0000:dc00 is used by cwd for maintaining the cwd's FATClusterPointer.
 
 ## Multitasking
 

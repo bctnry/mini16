@@ -17,11 +17,11 @@
 
 #define M_MIN(X, Y) (((X)<(Y))?(X):(Y))
 
-const char* PROMPT = "& ";
-const char* UNKNOWN_COMMAND = "? Unknown command ";
-char cmdbuf[256];
+#define cmdbuf ((char far*)0x0000f000)
 char tokenbuf[256];
 char strbuf[256];
+const char* PROMPT = "& ";
+const char* UNKNOWN_COMMAND = "? Unknown command ";
 const char* AT_FORMAT_ERROR_HEAD = "? Format: ";
 const char* AT_READ_MEM_FORMAT = "@read_mem [n] [seg] [off]";
 const char* AT_WRITE_MEM_FORMAT = "@write_mem [seg] [off]";
@@ -390,7 +390,7 @@ void at_fat12_info(char* x) {
     }
     term_echo_newline();
     sformat(strbuf, "Byte per sector: %W\nSector per cluster: %W\nReserved sector: %W\n",
-        ((FATDescriptor far*)z)->byte_per_sector,
+        ((FATDescriptor far*)z)->bytes_per_sector,
         ((FATDescriptor far*)z)->sector_per_cluster,
         ((FATDescriptor far*)z)->n_reserved_sector
     );
@@ -413,13 +413,59 @@ void at_chd(char* x) {
         return;
     }
     cwd_set_drive_n(drive_n);
+    read_sector(
+        DISKBUFF_FSTSEC_FAR,
+        1,
+        drive_n,
+        0, 0, 1
+    );
     term_echo_str(CWD_FAR);
     term_echo_newline();
 }
-void get_cluster(char* x);
+
+void at_read_file(char* x) {
+    char z;
+    char far* filebuff = (char far*)0x10000000;
+    FATDirectoryEntry far* dir_entry;
+    
+    z = get_token_i(x, tokenbuf);
+    while (cmdbuf[z] && cmdbuf[z] == ' ') { z++; }
+    get_drive_param(cwd_get_drive_n(), CWD_DRIVE_PARAMETER_POINTER_NEAR);
+    dir_entry = fat12_find_entry_in_directory(
+        CWD_DRIVE_PARAMETER_POINTER,
+        (struct FATDescriptor far*)DISKBUFF_FSTSEC_FAR,
+        cwd_at_root()? (FATClusterPointer far*)0 : CWD_CLUSTER_POINTER_FAR,
+        (char far*)(unsigned long)(&cmdbuf[z])
+    );
+    if (!dir_entry) {
+        _disp_error("? No found");
+        return;
+    }
+    do {
+        fat12_load_cluster(
+            CWD_DRIVE_PARAMETER_POINTER,
+            (struct FATDescriptor far*)DISKBUFF_FSTSEC_FAR,
+            filebuff,
+            CWD_CLUSTER_POINTER_FAR->cluster_id
+        );
+        filebuff +=
+            (((struct FATDescriptor far*)DISKBUFF_FSTSEC_FAR)->bytes_per_sector)
+            * (((struct FATDescriptor far*)DISKBUFF_FSTSEC_FAR)->sector_per_cluster)
+        ;
+    } while (fat12_next_cluster(
+        CWD_DRIVE_PARAMETER_POINTER,
+        (FATDescriptor far*)DISKBUFF_FSTSEC_FAR,
+        CWD_CLUSTER_POINTER_FAR
+    ) != 1);
+}
+
+
 // `x` already trimmed left.
 void at_shell(char* x) {
+    char v;
     char* subj = get_token(x, tokenbuf);
+    unsigned short z;
+    FATDirectoryEntry far* dir_entry;
     if (strcmp(tokenbuf, "@read_mem") == 0) {
         at_read_mem(x);
     } else if (strcmp(tokenbuf, "@write_mem") == 0) {
@@ -436,6 +482,8 @@ void at_shell(char* x) {
         at_apm_load();
     } else if (strcmp(tokenbuf, "@apm_shutdown") == 0) {
         at_apm_shutdown();
+    } else if (strcmp(tokenbuf, "@reboot") == 0) {
+        // power_bios_reboot();
     } else if (strcmp(tokenbuf, "@vesa_chk") == 0) {
         at_vesa();
     } else if (strcmp(tokenbuf, "@lba_read") == 0) {
@@ -452,12 +500,45 @@ void at_shell(char* x) {
         cwd_goto_parent();
         term_echo_str(CWD_NEAR);
         term_echo_newline();
+    } else if (strcmp(tokenbuf, "@read_file") == 0) {
+        at_read_file(x);
     } else if (strcmp(tokenbuf, "@cd") == 0) {
         while (*subj && *subj == ' ') { subj++; }
-        cwd_goto(subj);
-        term_echo_str(CWD_NEAR);
-        term_echo_newline();
-
+        v = cwd_single_goto(subj);
+        if (!v) {
+            _disp_error("? Not found");
+        } else {
+            term_echo_str(CWD_NEAR);
+            term_echo_newline();
+        }
+    } else if (strcmp(tokenbuf, "@find") == 0) {
+        z = get_token_i(x, tokenbuf);
+        while (cmdbuf[z] && cmdbuf[z] == ' ') { z++; }
+        get_drive_param(cwd_get_drive_n(), CWD_DRIVE_PARAMETER_POINTER_NEAR);
+        dir_entry = fat12_find_entry_in_directory(
+            CWD_DRIVE_PARAMETER_POINTER,
+            (FATDescriptor far*)DISKBUFF_FSTSEC_FAR,
+            cwd_at_root()? (FATClusterPointer far*)0 : CWD_CLUSTER_POINTER_FAR,
+            (char far*)(unsigned long)(&cmdbuf[z])
+        );
+        if (!dir_entry) {
+            _disp_error("? No found");
+        } else {
+            term_echo_nstr(dir_entry->name, 8);
+            term_echo(' ');
+            if (dir_entry->file_size == 0) {
+                term_echo_str("<DIR>");
+            } else {
+                term_echo_nstr(dir_entry->ext_name, 3);
+                term_echo(' ');
+                term_echo(' ');
+            }
+            term_echo(' ');
+            disp_dword(dir_entry->file_size);
+            term_echo_newline();
+        }
+    } else if (strcmp(tokenbuf, "@read_file") == 0) {
+        at_read_file(x);
     } else {
         term_echo_str(UNKNOWN_COMMAND);
         term_echo_str(x);
@@ -466,10 +547,31 @@ void at_shell(char* x) {
     return;
 }
 
-char far* DISKBUFF = (char far*)0x0000d000;
-char far* FATBUFF = (char far*)0x0000d400;
-
-
+char ls_disp_entry(FATDirectoryEntry far* x) {
+    term_echo_nstr(x->name, 8);
+    term_echo(' ');
+    if (x->file_size == 0) {
+        term_echo_str("<DIR>");
+    } else {
+        term_echo_nstr(x->ext_name, 3);
+        term_echo(' ');
+        term_echo(' ');
+    }
+    term_echo(' ');
+    disp_dword(x->file_size);
+    term_echo_newline();
+    return 0;
+}
+char lsw_disp_entry(FATDirectoryEntry far* x) {
+    char z = 0;
+    if (x->file_size == 0) { term_echo('['); }
+    while (z < 8 && x->name[z] != ' ') { term_echo(x->name[z]); z++; }
+    if (x->file_size == 0) { term_echo(']'); }
+    z = 0; if (x->ext_name[z] != ' ') { term_echo('.'); }
+    while (z < 3 && x->ext_name[z] != ' ') { term_echo(x->ext_name[z]); z++; }
+    term_echo(' ');
+    return 0;
+}
 void ls() {
     // drive: CMD+1, CMD+2
     // path start: CMD+3
@@ -478,13 +580,7 @@ void ls() {
     // 3.  unsupported 
     char drive_n;
     char sector_per_cluster;
-    char subj = CWD_NEAR[4];
-    char head, sec;
-    size_t i = 0, i2 = 0, page_i = 0, whole_i = 0;
-    unsigned short cyl;
-    // NOTE: this will only support drives less than ~32MBytes.
-    unsigned short temp;
-    char bound;
+    char far* subj = &CWD_FAR[4];
     DriveParameter dp;
     FATDirectoryEntry far* dir_entry_pointer;
 
@@ -506,103 +602,75 @@ void ls() {
 
     fat12:
     // read first sector into diskbuff.
-    read_sector(DISKBUFF, 1, drive_n, 0, 0, 1);
-    sector_per_cluster = ((FATDescriptor*)DISKBUFF)->sector_per_cluster;
-    // find & read dir.
-    temp = (
-        ((FATDescriptor*)DISKBUFF)->n_reserved_sector
-        + ((FATDescriptor*)DISKBUFF)->sector_per_fat
-            * ((FATDescriptor*)DISKBUFF)->n_fat
+    read_sector(DISKBUFF_FSTSEC_FAR, 1, drive_n, 0, 0, 1);
+    fat12_iterate_over_dir(
+        (DriveParameter far*)((unsigned long)0x0|(unsigned long)&dp),
+        (FATDescriptor far*)DISKBUFF_FSTSEC_FAR,
+        (FATClusterPointer far*)0x0,
+        ls_disp_entry
     );
-    disp_word(temp); term_echo_newline();
-    // NOTE: first bound is the root dir bound.
-    bound = ((FATDescriptor*)DISKBUFF)->byte_per_sector / 32;
+}
+void lsw() {
+    // drive: CMD+1, CMD+2
+    // path start: CMD+3
+    // 1.  check drive.
+    // 2.  check DMRT.
+    // 3.  unsupported 
+    char drive_n;
+    char sector_per_cluster;
+    char far* subj = &CWD_FAR[4];
+    DriveParameter dp;
+    FATDirectoryEntry far* dir_entry_pointer;
 
-    // chs -> nsec = c * (dp.sec*dp.h) + h * (dp.sec) + s
-    // nsec -> chs = (
-    //      nsec / dp.sec / dp.h
-    //      nsec / dp.sec % dp.h
-    //      nsec % dp.sec
-    // )
-    lba_to_chs(&dp, temp, &head, &sec, &cyl);
-    dir_entry_pointer = ((FATDirectoryEntry far*)(DISKBUFF + ((FATDescriptor*)DISKBUFF)->byte_per_sector));
-    read_sector((char far*)dir_entry_pointer,
-        1,
-        drive_n,
-        head,
-        cyl,
-        sec
-    );
-    // while whole_i < bound, the whole dir is not checked.
-    // a dir can span multiple page.
-    // while no entry in current page matches:
-    //     1. read next page.
-    //     2. rinse and repeat
-    // while a entry is match to current request:
-    //     1. get starting_cluster.
-    //     1. read the cluster.
-    //     2. 
-    /*
-    while (whole_i < bound) {
-        while (page_i < page_len && dir_entry_pointer[page_i].name[0]) {
-            // check each page.
-            i = 0; i2 = 0;
-            while (
-                subj[i]
-                && subj[i] != '/'
-                && i < 8
-                && dir_entry_pointer[page_i].name[i] != ' '
-                && subj[i] == dir_entry_pointer[page_i].name[i]
-            ) {
-                i++;
-            }
-            // NOTE: the following are the condition for continuing to the match for ext_name.
-            // if we failed at this point we should just go to the next item.
-            if (!(!subj[i] || subj[i] == '/' || i == 8 || dir_entry_pointer[page_i].name[i] == ' ')) {
-                page_i++;
-                continue;
-            }
-            while (
-                subj[i]
-                && subj[i] != '/'
-                && i2 < 3
-                && dir_entry_pointer->ext_name[i2] != ' '
-                && subj[i] == dir_entry_pointer->name[i2]
-            ) {
-                i++;
-                i2++;
-            }
-            if (!(!subj[i] || subj[i] == '/' || i == 8 || dir_entry_pointer[page_i].name[i] == ' ')) {
-                page_i++;
-                continue;
-            }
-            subj = &subj[i+1];
-            page_i ++;
+    drive_n = cwd_get_drive_n();
+    get_drive_param(drive_n, &dp);
+    switch (fs_gettype(drive_n)) {
+        case 0: {
+            term_echo_str("? Drive not mounted\n"); return;
         }
-
+        case 1: {
+            goto fat12;
+        }
+        default: {
+            sformat(strbuf, "? Mount type not supported: %B\n", fs_gettype(drive_n));
+            term_echo_str(strbuf);
+            return;
+        }
     }
-    */
+
+    fat12:
+    // read first sector into diskbuff.
+    read_sector(DISKBUFF_FSTSEC_FAR, 1, drive_n, 0, 0, 1);
+    fat12_iterate_over_dir(
+        (DriveParameter far*)((unsigned long)0x0|(unsigned long)&dp),
+        (FATDescriptor far*)DISKBUFF_FSTSEC_FAR,
+        (FATClusterPointer far*)0x0,
+        lsw_disp_entry
+    );
 }
 
 void _shell(void) {
     size_t i = 0;
-    char* x = cmdbuf;
+    char far* x = cmdbuf;
     cursor_set_pos(0, 24);
     for (;;) {
         term_echo_str(PROMPT);
-        kb_readline(cmdbuf, 256, 0, 0);
+        kb_readline_far(cmdbuf, 256, 0, 0);
         while (cmdbuf[i] && (cmdbuf[i] == ' ' || cmdbuf[i] == '\t')) { i++; }
         if (!cmdbuf[0]) { continue; }
         x = &cmdbuf[i];
         if (x[0] == '@') {
             at_shell(x);
         } else if (strcmp(x, "ver") == 0) {
-            term_echo_str("Mini16 2022.10.3\n");
+            term_echo_str("Mini16 2022.10.6\n");
         } else if (strcmp(x, "exit") == 0) {
             at_apm_shutdown();
             break;
         } else if (strcmp(x, "ls") == 0) {
             ls();
+        } else if (strcmp(x, "lsw") == 0) {
+            lsw();
+            term_echo_newline();
         } else if (strcmp(x, "cwd") == 0) {
             term_echo_str(CWD_FAR);
             term_echo_newline();

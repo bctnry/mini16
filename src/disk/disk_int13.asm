@@ -110,6 +110,7 @@ get_drive_param_:
 	PUSH CX
 	PUSH DX
 	MOV SI, DX
+	MOV [SI+4], AL
 	MOV DL, AL
 	MOV AH, 08h
 	INT 13H

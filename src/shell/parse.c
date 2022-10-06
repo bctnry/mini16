@@ -13,6 +13,18 @@ char* get_token(char* str, char* target) {
     return &str[i];
 }
 
+size_t get_token_i(char* str, char* target) {
+    size_t i = 0, j = 0;
+    while (str[i] && (str[i] == ' ' || str[i] == '\t')) { i++; }
+    while (str[i] && str[i] != ' ' && str[i] != '\t') {
+        target[j] = str[i];
+        i++;
+        j++;
+    }
+    target[j] = 0;
+    return i;
+}
+
 inline char read_nibble_ch(char x) {
     char res = x >= 'a'? (x - 'a' + 0x0a) : x >= 'A'? (x - 'A' + 0x0a) : x - '0';
     return res;
