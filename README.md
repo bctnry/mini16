@@ -1,5 +1,7 @@
 # Mini16
 
+**NOTE: Mini16 is now [SRH Syzygy](https://github.com/bctnry/SRH-Syzygy).**
+
 16-bit x86 operating system for teaching.
 
 (very early version. things might change drastically.)
